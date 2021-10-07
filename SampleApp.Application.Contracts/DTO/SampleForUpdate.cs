@@ -9,8 +9,11 @@ namespace SampleApp.Application.Contracts.DTO
     /// </summary>
     public class SampleForUpdate
     {
+        [Required]
         public Guid SampleId { get; set; }
 
+        [Required]
+        [MaxLength(32)]
         public string Name { get; set; }
 
         public List<SubSample> SubSamples { get; set; }

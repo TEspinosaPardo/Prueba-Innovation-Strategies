@@ -17,10 +17,11 @@ In the SamplesController you will find all the functionalities this controller m
 All the methods in the controller should implement the logic in it's definition. 
 Although the entity context is already defined you have to implement the access to this context in each and every functionality provided the way you see fit.
 
-## GetAllAsync
+## GetAllAsync (Falta implementación de rows por configuration key)
 
 Apart from the expected logic described in the controller, the number of rows retrieved must be limited based on a configuration key. 
 *For example: you can limit a request to the last N rows based on creation date.*
+
 
 ## UpdateAsync
 
@@ -50,10 +51,13 @@ Expected response structure:
 ]
 ```
 
+Additional comment: The URL used to test this method is "https://localhost:44353/api/Samples/flattened/?fromDate=2020-05-04&toDate=2020-05-06" with the dates as parameters inside the URL
+
 # Questions over the API
 
 - Why do you think the dependency injection is implemented in each layer and not only in the Api?
 - Do you think there is anything that can be improved in the SamplesController?
+    - The only change i see as a little improvement is the action of the DeleteAsync method to GET because if you're sending a parameter through the URL there's no reason to have the POST action.
 
 *These questions can be answered in Spanish*.
 

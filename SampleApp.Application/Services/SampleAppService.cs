@@ -1,10 +1,14 @@
 ﻿using FluentValidation;
-using SampleApp.Application.Contracts.DTO;
+using DTO = SampleApp.Application.Contracts.DTO;
 using SampleApp.Application.Contracts.Services;
+using SampleApp.Domain.Entities;
+using SampleApp.Infrastructure.Daos.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using SampleApp.Infrastructure.Daos;
+using SampleApp.Application.Contracts.DTO;
 
 namespace SampleApp.Application.Services
 {
@@ -13,9 +17,10 @@ namespace SampleApp.Application.Services
     /// </summary>    
     internal class SampleAppService : ISampleAppService
     {
-        private readonly IValidator<SampleForCreate> _validatorCreate;
+        private readonly IValidator<DTO.SampleForCreate> _validatorCreate;
+        private readonly ISampleAppDAO _sampleAppDAO = new SampleAppDAO();
 
-        public SampleAppService(IValidator<SampleForCreate> validatorCreate)
+        public SampleAppService(IValidator<DTO.SampleForCreate> validatorCreate)
         {
             _validatorCreate = validatorCreate;
         }
@@ -25,54 +30,79 @@ namespace SampleApp.Application.Services
             Dispose(false);
         }
 
-        public async Task<IEnumerable<SampleForRead>> GetAllSamplesAsync()
+        public async Task<IEnumerable<DTO.SampleForRead>> GetAllSamplesAsync()
         {
-            IEnumerable<Application.Contracts.DTO.SampleForRead> result = null;
+            IEnumerable<DTO.SampleForRead> result = await _sampleAppDAO.GetAllSamplesAsync();
 
             return result;
         }
 
-        public async Task<SampleForRead> GetByIdAsync(Guid id)
+        public async Task<DTO.SampleForRead> GetByIdAsync(Guid id)
         {
-            SampleForRead result = null;
+            DTO.SampleForRead result = await _sampleAppDAO.GetByIdAsync(id);
 
             return result;
         }
 
-        public async Task<IEnumerable<Contracts.DTO.SubSample>> GetSubSamplesAsync(Guid sampleId)
+        public async Task<IEnumerable<DTO.SubSample>> GetSubSamplesAsync(Guid sampleId)
         {
-            IEnumerable<Application.Contracts.DTO.SubSample> result = null;
+            IEnumerable<DTO.SubSample> result = await _sampleAppDAO.GetSubSamplesAsync(sampleId);
 
             return result;
         }
 
-        public async Task<SampleForRead> AddSampleAsync(SampleForCreate sampleForCreation)
+        public async Task<DTO.SampleForRead> AddSampleAsync(DTO.SampleForCreate sampleForCreation)
         {
             if (null == sampleForCreation)
                 throw new ArgumentNullException(nameof(sampleForCreation));
 
             var valid = _validatorCreate.Validate(sampleForCreation);
             if (!valid.IsValid)
-                throw new Exception(String.Join("; ", valid.Errors.Select(c => c.ErrorMessage)));
+                throw new Exception(string.Join("; ", valid.Errors.Select(c => c.ErrorMessage)));
 
-            SampleForRead result = null;
+            Sample sample = new Sample()
+            {
+                SampleId = sampleForCreation.SampleId,
+                Name = sampleForCreation.Name,
+                SubSamples = sampleForCreation.SubSamples.Select(subSample => new Domain.Entities.SubSample()
+                {
+                    SubSampleId = subSample.SubSampleId,
+                    Info = subSample.Info
+                }).ToList(),
+            };
+
+            await _sampleAppDAO.AddSampleAsync(sample);
+
+            DTO.SampleForRead result = await _sampleAppDAO.GetByIdAsync(sample.SampleId);
 
             return result;
         }
 
-        public async Task<SampleForRead> UpdateSampleAsync(SampleForUpdate sampleForUpdate)
+        public async Task<DTO.SampleForRead> UpdateSampleAsync(DTO.SampleForUpdate sampleForUpdate)
         {
             if (null == sampleForUpdate)
                 throw new ArgumentNullException(nameof(sampleForUpdate));
 
-            SampleForRead result = null;
-            
+            Sample sample = await _sampleAppDAO.GetSampleByIdAsync(sampleForUpdate.SampleId);
+
+            DTO.SampleForRead result = null;
+
+
+            if (sample != null)
+            {
+                sample.Name = sampleForUpdate.Name;
+
+                await _sampleAppDAO.UpdateSampleAsync(sample);
+
+                result = await _sampleAppDAO.GetByIdAsync(sample.SampleId);
+            }
+
             return result;
         }
 
         public async Task DeleteSampleAsync(Guid id)
         {
-            
+            await _sampleAppDAO.DeleteSampleAsync(id);
         }
 
         public void Dispose()
@@ -84,6 +114,13 @@ namespace SampleApp.Application.Services
         protected void Dispose(bool disposing)
         {
 
+        }
+
+        public async Task<IEnumerable<DTO.SampleSubSample>> GetByIdFlattenedAsync(DateTime? fromDate, DateTime? toDate)
+        {
+            IEnumerable<DTO.SampleSubSample> result = await _sampleAppDAO.GetByIdFlattenedAsync(fromDate, toDate);
+
+            return result;
         }
     }
 }

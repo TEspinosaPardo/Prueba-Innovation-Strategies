@@ -153,7 +153,32 @@ namespace SampleApp.Api.Controllers
             using (_service)
                 await _service.DeleteSampleAsync(id);
     
-            return NoContent();
+            return Ok();
+        }
+
+        /// <summary>
+        /// Retrieves the given Sample WITH all its SubSamples in flattened format
+        /// </summary>
+        /// <param name="id">Sample Id to retrieve</param>
+        /// <param name="fromDate"></param>
+        /// <param name="toDate"></param>        
+        [HttpGet]
+        [Route("flattened")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(typeof(SampleSubSample), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetByIdFlattenedAsync(DateTime? fromDate, DateTime? toDate)
+        {
+            IEnumerable<SampleSubSample> result;
+
+            using (_service)
+                result = await _service.GetByIdFlattenedAsync(fromDate, toDate);
+
+            if (result == null)
+                return NotFound();
+
+            return Ok(result);
         }
     }
 }

@@ -52,5 +52,6 @@ namespace SampleApp.Application.Contracts.Services
         /// <param name="id"></param>
         /// <returns></returns>
         Task DeleteSampleAsync(Guid id);
+        Task<IEnumerable<DTO.SampleSubSample>> GetByIdFlattenedAsync(DateTime? fromDate, DateTime? toDate);
     }
 }
